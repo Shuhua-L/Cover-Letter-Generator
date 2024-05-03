@@ -1,7 +1,7 @@
 virenv/
 __pycache__
 
-.streamlit/
+.streamlit/secrets.toml
 .vscode
 
 ignore/
