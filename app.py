@@ -1,5 +1,9 @@
 import streamlit as st
+import clipboard
 import oai
+
+# App title
+st.set_page_config(page_title="Cover Letter Generator", page_icon="📮", layout="centered")
 
 def generate_cover_letter(title, company, description):
   if st.session_state.n_requests >= 5:
@@ -38,8 +42,11 @@ def initializeState(list):
         else:
           st.session_state[state] = ""
 
+def on_click_copy():
+    clipboard.copy(st.session_state.letter)
+    st.toast("Cover Letter Copied", icon="✅")
+
 # Configure Streamlit page and state
-st.set_page_config(page_title="Cover Letter Generator", page_icon="📮", layout="centered")
 initializeState(['letter', 'title', 'company', 'description', 'text_error', 'n_requests'])
 
 
@@ -72,3 +79,4 @@ if st.session_state.letter:
     ht=int(len(st.session_state.letter) / 100 * 30)
     st.markdown("""---""")
     st.text_area(label="Cover Letter", value=st.session_state.letter, height=ht)
+    st.button(label="Copy", type="primary", on_click=on_click_copy)
