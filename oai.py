@@ -2,30 +2,44 @@
 
 import openai
 import streamlit as st
+import os
+
+def check_openai_api_key(key):
+    """Check if OpenAI API key is valid"""
+    client = openai.OpenAI(api_key=key)
+    try:
+        client.models.list()
+    except openai.AuthenticationError:
+        return False
+    else:
+        return True
 
 # Instantiate OpenAI with credentials from streamlit secrets
-openai_key = st.secrets["OPENAI_API_KEY"]
-client = openai.OpenAI(api_key=openai_key)
+# openai_key = os.getenv("OPENAI_API_KEY") or st.secrets["OPENAI_API_KEY"]
+# openai_key = os.getenv("OPENAI_API_KEY")
+# client = openai.OpenAI(api_key=openai_key)
 
 class Openai:
     """OpenAI Connector."""
+    def __init__(self):
+        openai_key = os.getenv("OPENAI_API_KEY")
+        self.client = openai.OpenAI(api_key=openai_key)
 
-    @staticmethod
-    def moderate(prompt: str) -> bool:
+    def moderate(self, prompt: str) -> bool:
         """Call OpenAI GPT Moderation to check whether text is potentially harmful
         Args:
             prompt: text prompt
         Return: boolean if flagged
         """
         try:
-            response = client.moderations.create(input=prompt)
+            response = self.client.moderations.create(input=prompt)
             return response.results[0].flagged
 
         except Exception as e:
             st.session_state.text_error = f"OpenAI API error: {e}"
 
-    @staticmethod
     def complete(
+        self,
         prompt: str,
         model: str = "gpt-3.5-turbo",
         temperature: float = 0.9,
@@ -40,7 +54,7 @@ class Openai:
         Return: predicted response text
         """
         try:
-            response = client.chat.completions.create(
+            response = self.client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=temperature,
