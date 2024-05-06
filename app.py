@@ -89,9 +89,12 @@ with st.sidebar:
         "Enter OpenAI API token:", type="password", key="OPENAI_API_KEY"
     )
 
-    if "OPENAI_API_KEY" in st.secrets and st.secrets["OPENAI_API_KEY"]:
-        st.success("API key already provided!", icon="✅")
-        openai_key = st.secrets["OPENAI_API_KEY"]
+    try:
+        if "OPENAI_API_KEY" in st.secrets and st.secrets["OPENAI_API_KEY"]:
+            st.success("API key already provided!", icon="✅")
+            openai_key = st.secrets["OPENAI_API_KEY"]
+    except FileNotFoundError:
+        pass
 
     if not openai_key:
         st.warning("Please enter your credentials!", icon="⚠️")
