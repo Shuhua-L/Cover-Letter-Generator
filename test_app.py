@@ -33,8 +33,10 @@ def test_invalid_input_api_key():
 def test_invalid_secret_api_key():
     """If API key is provided in environment, the submit button is enabled"""
     try:
-        os.environ["OPENAI_API_KEY"]
-        at = AppTest.from_file("app.py", default_timeout=10).run()
+        key = os.environ["OPENAI_API_KEY"]
+        at = AppTest.from_file("app.py", default_timeout=10)
+        at.secrets["OPENAI_API_KEY"] = key
+        at.run()
         assert len(at.success) == 2
         assert at.success[0].value == "API key already provided!"
         assert at.success[1].value == "Proceed to entering your prompt message!"

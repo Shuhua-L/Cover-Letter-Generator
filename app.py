@@ -90,15 +90,11 @@ with st.sidebar:
     )
 
     try:
-        if "OPENAI_API_KEY" in os.environ:
-            openai_key = os.environ["OPENAI_API_KEY"]
-        elif "OPENAI_API_KEY" in st.secrets and st.secrets["OPENAI_API_KEY"]:
+        if "OPENAI_API_KEY" in st.secrets and st.secrets["OPENAI_API_KEY"]:
+            st.success("API key already provided!", icon="✅")
             openai_key = st.secrets["OPENAI_API_KEY"]
-    except FileNotFoundError or KeyError:
+    except FileNotFoundError:
         pass
-
-    if openai_key:
-        st.success("API key already provided!", icon="✅")
 
     if not openai_key:
         st.warning("Please enter your credentials!", icon="⚠️")
