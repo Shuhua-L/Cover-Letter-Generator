@@ -22,9 +22,7 @@ def test_submit_without_job_description():
     assert at.error[0].value == "Please enter job description"
 
 
-@pytest.mark.skipif(
-    "OPENAI_API_KEY" not in os.environ, reason="Skip test if no API key is provided"
-)
+@pytest.mark.skip(reason="Only run manually to save API usage")
 def test_submit_with_job_description():
     # Initialize app and ensure submit button is enabled
     at = AppTest.from_file("app.py", default_timeout=10)
