@@ -1,23 +1,16 @@
 import os
 import pytest
-import streamlit as st
 from streamlit.testing.v1 import AppTest
 from tests.sample_data import job
 
 
+@pytest.mark.skipif(
+    "OPENAI_API_KEY" not in os.environ, reason="Skip test if no API key is provided"
+)
 def test_submit_without_job_description():
-    key = None
-    if "OPENAI_API_KEY" in st.secrets:
-        key = st.secrets["OPENAI_API_KEY"]
-    elif "OPENAI_API_KEY" in os.environ:
-        key = os.environ["OPENAI_API_KEY"]
-    else:
-        # Skip test if no API key is provided
-        return
-
     # Initialize app and ensure submit button is enabled
     at = AppTest.from_file("app.py", default_timeout=10)
-    at.secrets["OPENAI_API_KEY"] = key
+    at.secrets["OPENAI_API_KEY"] = os.environ["OPENAI_API_KEY"]
     at.run()
     assert at.button("submit").disabled is False
     assert len(at.success) == 2
@@ -29,20 +22,13 @@ def test_submit_without_job_description():
     assert at.error[0].value == "Please enter job description"
 
 
-@pytest.mark.skip(reason="Skipping test due to API usage")
+@pytest.mark.skipif(
+    "OPENAI_API_KEY" not in os.environ, reason="Skip test if no API key is provided"
+)
 def test_submit_with_job_description():
-    key = None
-    if "OPENAI_API_KEY" in st.secrets:
-        key = st.secrets["OPENAI_API_KEY"]
-    elif "OPENAI_API_KEY" in os.environ:
-        key = os.environ["OPENAI_API_KEY"]
-    else:
-        # Skip test if no API key is provided
-        return
-
     # Initialize app and ensure submit button is enabled
     at = AppTest.from_file("app.py", default_timeout=10)
-    at.secrets["OPENAI_API_KEY"] = key
+    at.secrets["OPENAI_API_KEY"] = os.environ["OPENAI_API_KEY"]
     at.run()
     assert at.button("submit").disabled is False
     assert len(at.success) == 2
@@ -51,10 +37,11 @@ def test_submit_with_job_description():
     at.text_area("description").input(job["description"]).run()
     at.button("submit").click().run()
 
+    # verify generated cover letter
     assert at.text_area("letter").value is not None
     assert len(at.text_area("letter").value) > 50
 
-    # Verify copy button
+    # verify copy button
     assert at.button("copy").disabled is False
     at.button("copy").click().run()
     assert at.toast[0].value == "Cover Letter Copied"
