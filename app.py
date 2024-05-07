@@ -1,21 +1,13 @@
 import os
 import streamlit as st
-import clipboard
+
 import oai
+from util import toast_error, generate_prompt, copy_to_clipboard
 
 # App title
 st.set_page_config(
     page_title="Cover Letter Generator", page_icon="📮", layout="centered"
 )
-
-
-def toast_error(msg):
-    st.toast(f":red[{msg}]", icon="🚨")
-
-
-def generate_prompt(job_title, job_company, job_description):
-    prompt = f"Write a cover letter for {job_title} at {job_company} with the following description: {job_description}"
-    return prompt
 
 
 def onclick_submit():
@@ -46,7 +38,6 @@ def onclick_submit():
 
             else:
                 st.session_state.n_requests += 1
-
                 st.session_state.letter = (
                     openai.complete(prompt=prompt).strip().replace('"', "")
                 )
@@ -63,9 +54,9 @@ def initializeState(list):
                 st.session_state[state] = ""
 
 
-def on_click_copy():
-    clipboard.copy(st.session_state.letter)
-    st.toast("Cover Letter Copied", icon="✅")
+# def copy_to_clipboard():
+#     clipboard.copy(st.session_state.letter)
+#     st.toast("Cover Letter Copied", icon="✅")
 
 
 # Configure Streamlit page and state
@@ -139,4 +130,4 @@ if st.session_state.letter:
     st.text_area(
         label="Cover Letter", value=st.session_state.letter, height=ht, key="letter"
     )
-    st.button(label="Copy", on_click=on_click_copy, key="copy")
+    st.button(label="Copy", on_click=copy_to_clipboard, key="copy")
