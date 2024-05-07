@@ -15,7 +15,9 @@ def test_no_api_key():
     at.run()
     assert len(at.warning) == 1
     assert at.warning[0].value == "Please enter your credentials!"
-    assert at.button("submit").disabled is True
+    assert (
+        at.button("FormSubmitter:job_info_form-Generate Cover Letter").disabled is True
+    )
 
 
 def test_invalid_input_api_key():
@@ -27,7 +29,9 @@ def test_invalid_input_api_key():
     at.text_input("OPENAI_API_KEY").input("this_is_not_a_valid_api_key").run()
     assert len(at.error) == 1
     assert at.error[0].value == "Invalid OpenAI API key."
-    assert at.button("submit").disabled is True
+    assert (
+        at.button("FormSubmitter:job_info_form-Generate Cover Letter").disabled is True
+    )
 
 
 def test_invalid_secret_api_key():
@@ -40,6 +44,9 @@ def test_invalid_secret_api_key():
         assert len(at.success) == 2
         assert at.success[0].value == "API key already provided!"
         assert at.success[1].value == "Proceed to entering your prompt message!"
-        assert at.button("submit").disabled is False
+        assert (
+            at.button("FormSubmitter:job_info_form-Generate Cover Letter").disabled
+            is False
+        )
     except KeyError:
         pass

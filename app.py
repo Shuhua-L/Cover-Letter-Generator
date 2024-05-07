@@ -9,31 +9,44 @@ st.set_page_config(
 )
 
 
-def generate_cover_letter(title, company, description):
+def toast_error(msg):
+    st.toast(f":red[{msg}]", icon="🚨")
+
+
+def generate_prompt(job_title, job_company, job_description):
+    prompt = f"Write a cover letter for {job_title} at {job_company} with the following description: {job_description}"
+    return prompt
+
+
+def onclick_submit():
     if st.session_state.n_requests >= 5:
-        st.session_state.text_error = "Too many requests. Please wait a few seconds before generating another Tweet."
+        toast_error(
+            "Too many requests. Please wait a few seconds before generating another Tweet."
+        )
         st.session_state.n_requests = 1
         return
 
-    st.session_state.letter = ""
-    st.session_state.text_error = ""
-    prompt = f"Write a cover letter for {title} at {company} with the following description: {description}"
-
-    if not description:
-        st.session_state.text_error = "Please enter job description"
+    if not job_title:
+        toast_error("Please enter job title")
         return
+    elif not job_description:
+        toast_error("Please enter job description")
+        return
+
+    st.session_state.letter = ""
+    prompt = generate_prompt(job_title, job_company, job_description)
 
     with text_spinner_placeholder:
         with st.spinner("Please wait while your letter is being generated..."):
             openai = oai.Openai()
             flagged = openai.moderate(prompt)
             if flagged:
-                st.session_state.text_error = "Input flagged as inappropriate."
+                toast_error("Input flagged as inappropriate.")
                 return
 
             else:
-                st.session_state.text_error = ""
                 st.session_state.n_requests += 1
+
                 st.session_state.letter = (
                     openai.complete(prompt=prompt).strip().replace('"', "")
                 )
@@ -56,17 +69,7 @@ def on_click_copy():
 
 
 # Configure Streamlit page and state
-initializeState(
-    [
-        "letter",
-        "title",
-        "company",
-        "description",
-        "text_error",
-        "n_requests",
-        "api_connection",
-    ]
-)
+initializeState(["letter", "n_requests", "api_connection"])
 
 
 # Force responsive layout for columns also on mobiles
@@ -112,22 +115,23 @@ with st.sidebar:
 # Render main page
 st.title("Cover Letter Generator")
 
-title = st.text_input(label="Job title *")
-company = st.text_input(label="Company") or "Company"
-description = st.text_area(label="Job description *", key="description")
-st.button(
+# Render form
+job = st.form(key="job_info_form")
+job_title = job.text_input(label="Job title :red[*]", key="title")
+job_company = job.text_input(label="Company") or "Company"
+job_description = job.text_area(label="Job description :red[*]", key="description")
+submit = job.form_submit_button(
     label="Generate Cover Letter",
     type="primary",
-    key="submit",
-    on_click=generate_cover_letter,
-    args=(title, company, description),
     disabled=not st.session_state.api_connection,
-    help="Please enter your credentials in the sidebar to generate your cover letter.",
+    help="Please enter your credentials in the sidebar to generate your cover letter."
+    if not st.session_state.api_connection
+    else None,
 )
-
 text_spinner_placeholder = st.empty()
-if st.session_state.text_error:
-    st.error(st.session_state.text_error)
+if submit:
+    onclick_submit()
+
 
 if st.session_state.letter:
     ht = int(len(st.session_state.letter) / 100 * 30)
@@ -135,4 +139,4 @@ if st.session_state.letter:
     st.text_area(
         label="Cover Letter", value=st.session_state.letter, height=ht, key="letter"
     )
-    st.button(label="Copy", type="primary", on_click=on_click_copy, key="copy")
+    st.button(label="Copy", on_click=on_click_copy, key="copy")
