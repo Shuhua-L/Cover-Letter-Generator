@@ -4,6 +4,7 @@ import openai
 import streamlit as st
 import os
 
+
 def check_openai_api_key(key):
     """Check if OpenAI API key is valid"""
     client = openai.OpenAI(api_key=key)
@@ -14,13 +15,10 @@ def check_openai_api_key(key):
     else:
         return True
 
-# Instantiate OpenAI with credentials from streamlit secrets
-# openai_key = os.getenv("OPENAI_API_KEY") or st.secrets["OPENAI_API_KEY"]
-# openai_key = os.getenv("OPENAI_API_KEY")
-# client = openai.OpenAI(api_key=openai_key)
 
 class Openai:
     """OpenAI Connector."""
+
     def __init__(self):
         openai_key = os.getenv("OPENAI_API_KEY")
         self.client = openai.OpenAI(api_key=openai_key)
@@ -53,15 +51,30 @@ class Openai:
             max_tokens: int between 1 and 2048
         Return: predicted response text
         """
+        resume = os.getenv("RESUME")
+        if resume:
+            prompt += f"Resume:{resume}"
+
+        command = os.getenv("COMMAND")
+        if command:
+            messages = [
+                {"role": "system", "content": command},
+                {"role": "user", "content": prompt},
+            ]
+        else:
+            messages = [{"role": "user", "content": prompt}]
+
+        # OpenAI API call
         try:
             response = self.client.chat.completions.create(
                 model=model,
-                messages=[{"role": "user", "content": prompt}],
+                messages=messages,
                 temperature=temperature,
                 # max_tokens=max_tokens,
             )
+
             return response.choices[0].message.content
 
         except Exception as e:
             st.session_state.text_error = f"OpenAI API error: {e}"
-            return ''
+            return ""
