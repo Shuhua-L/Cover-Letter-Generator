@@ -1,7 +1,8 @@
-from streamlit.testing.v1 import AppTest
 import os
+import pytest
 import streamlit as st
-from sample_data import job
+from streamlit.testing.v1 import AppTest
+from tests.sample_data import job
 
 
 def test_submit_without_job_description():
@@ -28,6 +29,7 @@ def test_submit_without_job_description():
     assert at.error[0].value == "Please enter job description"
 
 
+@pytest.mark.skip(reason="Skipping test due to API usage")
 def test_submit_with_job_description():
     key = None
     if "OPENAI_API_KEY" in st.secrets:
