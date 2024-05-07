@@ -20,7 +20,7 @@ def generate_cover_letter(title, company, description):
     prompt = f"Write a cover letter for {title} at {company} with the following description: {description}"
 
     if not description:
-        st.session_state.text_error = "Please enter description"
+        st.session_state.text_error = "Please enter job description"
         return
 
     with text_spinner_placeholder:
@@ -114,7 +114,7 @@ st.title("Cover Letter Generator")
 
 title = st.text_input(label="Job title *")
 company = st.text_input(label="Company") or "Company"
-description = st.text_area(label="Job description *")
+description = st.text_area(label="Job description *", key="description")
 st.button(
     label="Generate Cover Letter",
     type="primary",
@@ -132,5 +132,7 @@ if st.session_state.text_error:
 if st.session_state.letter:
     ht = int(len(st.session_state.letter) / 100 * 30)
     st.markdown("""---""")
-    st.text_area(label="Cover Letter", value=st.session_state.letter, height=ht)
-    st.button(label="Copy", type="primary", on_click=on_click_copy)
+    st.text_area(
+        label="Cover Letter", value=st.session_state.letter, height=ht, key="letter"
+    )
+    st.button(label="Copy", type="primary", on_click=on_click_copy, key="copy")
