@@ -15,7 +15,7 @@ def test_submit_without_title_description():
 
     submit_button = at.button("FormSubmitter:job_info_form-Generate Cover Letter")
     assert submit_button.disabled is False
-    assert len(at.success) == 2
+    assert len(at.success) == 1
 
     # submit without job title, description
     assert at.text_input("title").value == ""

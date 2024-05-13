@@ -41,9 +41,8 @@ def test_invalid_secret_api_key():
         at = AppTest.from_file("app.py", default_timeout=10)
         at.secrets["OPENAI_API_KEY"] = key
         at.run()
-        assert len(at.success) == 2
-        assert at.success[0].value == "API key already provided!"
-        assert at.success[1].value == "Proceed to entering your prompt message!"
+        assert len(at.success) == 1
+        assert at.success[0].value == "Connected to OpenAI"
         assert (
             at.button("FormSubmitter:job_info_form-Generate Cover Letter").disabled
             is False
