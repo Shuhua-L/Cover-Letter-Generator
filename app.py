@@ -2,6 +2,7 @@ import os
 import streamlit as st
 
 import oai
+from pdf import generate_pdf
 from util import generate_prompt, toast_error, copy_to_clipboard
 
 # App title
@@ -47,19 +48,23 @@ def onclick_submit():
                 )
 
 
+def save_letter():
+    st.session_state.output_ready = True
+
+
 def initializeState(list):
     for state in list:
         if state not in st.session_state:
             if state == "n_requests":
                 st.session_state[state] = 0
-            elif state == "api_connection":
+            elif state == "api_connection" or state == "output_ready":
                 st.session_state[state] = False
             else:
                 st.session_state[state] = ""
 
 
 # Configure Streamlit page and state
-initializeState(["letter", "n_requests", "api_connection"])
+initializeState(["letter", "n_requests", "api_connection", "output_ready"])
 
 
 # Force responsive layout for columns also on mobiles
@@ -145,18 +150,47 @@ if st.session_state.letter:
     ht = int(len(st.session_state.letter) / 100 * 30)
     st.markdown("""---""")
     st.text_area(
-        label="Cover Letter", value=st.session_state.letter, height=ht, key="letter"
+        label="Cover Letter",
+        value=st.session_state.letter,
+        height=ht,
+        key="letter",
     )
 
-    btn1, btn2 = st.columns(2)
-    btn2.button(
-        label="Copy",
-        on_click=copy_to_clipboard,
-        key="copy",
-        type="primary",
+    filename = (
+        f"Cover Letter - {job_title}{'- ' + job_company if job_company else ''}.pdf"
     )
-    btn1.button(
-        label="Regenerate",
-        on_click=onclick_submit,
-        key="regenerate",
-    )
+    generate_pdf(filename, st.session_state.letter)
+    with open(filename, "rb") as pdf_file:
+        PDFbyte = pdf_file.read()
+
+    buttons_placeholder = st.empty()
+
+    with buttons_placeholder:
+        btn1, btn2 = st.columns(2)
+        if not st.session_state.output_ready:
+            btn1.button(
+                label="Regenerate",
+                on_click=onclick_submit,
+                key="regenerate",
+            )
+            btn2.button(
+                label="Letter Looks Good",
+                key="confirm",
+                type="primary",
+                on_click=save_letter,
+            )
+        else:
+            btn1.button(
+                label="Copy",
+                on_click=copy_to_clipboard,
+                key="copy",
+                type="primary",
+            )
+            btn2.download_button(
+                label="Download PDF",
+                key="download",
+                type="primary",
+                file_name=filename,
+                data=PDFbyte,
+                mime="application/octet-stream",
+            )
