@@ -1,3 +1,5 @@
 streamlit
 openai
 clipboard
+pypdf
+reportlab

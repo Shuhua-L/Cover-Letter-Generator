@@ -2,7 +2,8 @@ import os
 import streamlit as st
 
 import oai
-from util import toast_error, copy_to_clipboard
+from pdf import generate_pdf
+from util import generate_prompt, toast_error, copy_to_clipboard
 
 # App title
 st.set_page_config(
@@ -26,7 +27,7 @@ def onclick_submit():
         return
 
     st.session_state.letter = ""
-    prompt = f"Job title: {job_title}. Job description: {job_description}"
+    prompt = generate_prompt(job_title, job_description, include_resume, resume)
 
     with text_spinner_placeholder:
         with st.spinner("Please wait while your letter is being generated..."):
@@ -47,19 +48,23 @@ def onclick_submit():
                 )
 
 
+def save_letter():
+    st.session_state.output_ready = True
+
+
 def initializeState(list):
     for state in list:
         if state not in st.session_state:
             if state == "n_requests":
                 st.session_state[state] = 0
-            elif state == "api_connection":
+            elif state == "api_connection" or state == "output_ready":
                 st.session_state[state] = False
             else:
                 st.session_state[state] = ""
 
 
 # Configure Streamlit page and state
-initializeState(["letter", "n_requests", "api_connection"])
+initializeState(["letter", "n_requests", "api_connection", "output_ready"])
 
 
 # Force responsive layout for columns also on mobiles
@@ -77,13 +82,13 @@ st.write(
 # Render sidebar
 with st.sidebar:
     st.subheader("Settings")
-    openai_key = st.text_input(
+    key_placeholder = st.empty()
+    openai_key = key_placeholder.text_input(
         "Enter OpenAI API token:", type="password", key="OPENAI_API_KEY"
     )
 
     try:
         if "OPENAI_API_KEY" in st.secrets and st.secrets["OPENAI_API_KEY"]:
-            st.success("API key already provided!", icon="✅")
             openai_key = st.secrets["OPENAI_API_KEY"]
     except FileNotFoundError:
         pass
@@ -92,13 +97,13 @@ with st.sidebar:
         st.warning("Please enter your credentials!", icon="⚠️")
         st.write("[Click here to get your OpenAI key](https://openai.com/api)")
     elif openai_key and oai.check_openai_api_key(openai_key):
-        st.success("Proceed to entering your prompt message!", icon="👉")
         os.environ["OPENAI_API_KEY"] = openai_key
         st.session_state.api_connection = True
+
+        key_placeholder.success("Connected to OpenAI", icon="✅")
     else:
         st.error("Invalid OpenAI API key.", icon="‼️")
 
-    st.write("---")
     selected_model = st.sidebar.selectbox(
         "Choose a GPT model",
         ["gpt-3.5-turbo", "gpt-4"],
@@ -108,14 +113,25 @@ with st.sidebar:
         "temperature", min_value=0.01, max_value=1.0, value=0.9, step=0.01
     )
 
+    st.write("---")
+    resume = st.file_uploader("Resume", type="pdf")
+
 # Render main page
 st.title("Cover Letter Generator")
 
 # Render form
 job = st.form(key="job_info_form")
 job_title = job.text_input(label="Job title :red[*]", key="title")
-job_company = job.text_input(label="Company") or "Company"
+job_company = job.text_input(label="Company")
 job_description = job.text_area(label="Job description :red[*]", key="description")
+include_resume = job.checkbox(
+    label=f"Include resume: :violet[{resume.name if resume else 'No resume provided'}]",
+    key="resume",
+    help="Upload your resume in sidebar to include it in your cover letter"
+    if not resume
+    else None,
+    disabled=not resume,
+)
 submit = job.form_submit_button(
     label="Generate Cover Letter",
     type="primary",
@@ -123,6 +139,7 @@ submit = job.form_submit_button(
     help="Please enter your credentials in the sidebar to generate your cover letter."
     if not st.session_state.api_connection
     else None,
+    use_container_width=True,
 )
 text_spinner_placeholder = st.empty()
 if submit:
@@ -133,6 +150,47 @@ if st.session_state.letter:
     ht = int(len(st.session_state.letter) / 100 * 30)
     st.markdown("""---""")
     st.text_area(
-        label="Cover Letter", value=st.session_state.letter, height=ht, key="letter"
+        label="Cover Letter",
+        value=st.session_state.letter,
+        height=ht,
+        key="letter",
     )
-    st.button(label="Copy", on_click=copy_to_clipboard, key="copy")
+
+    filename = (
+        f"Cover Letter - {job_title}{'- ' + job_company if job_company else ''}.pdf"
+    )
+    generate_pdf(filename, st.session_state.letter)
+    with open(filename, "rb") as pdf_file:
+        PDFbyte = pdf_file.read()
+
+    buttons_placeholder = st.empty()
+
+    with buttons_placeholder:
+        btn1, btn2 = st.columns(2)
+        if not st.session_state.output_ready:
+            btn1.button(
+                label="Regenerate",
+                on_click=onclick_submit,
+                key="regenerate",
+            )
+            btn2.button(
+                label="Letter Looks Good",
+                key="confirm",
+                type="primary",
+                on_click=save_letter,
+            )
+        else:
+            btn1.button(
+                label="Copy",
+                on_click=copy_to_clipboard,
+                key="copy",
+                type="primary",
+            )
+            btn2.download_button(
+                label="Download PDF",
+                key="download",
+                type="primary",
+                file_name=filename,
+                data=PDFbyte,
+                mime="application/octet-stream",
+            )

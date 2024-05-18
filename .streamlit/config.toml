@@ -20,27 +20,30 @@ toolbarMode = "minimal"
 # Automatically rerun script when the file is modified on disk.
 runOnSave = true
 
+# Max size, in megabytes, for files uploaded with the file_uploader.
+# Default: 200
+maxUploadSize = 5
+
 [browser]
 # Whether to send usage statistics to Streamlit.
 gatherUsageStats = false
 
 [theme]
-
 # The preset Streamlit theme that your custom theme inherits from.
 # One of "light" or "dark".
-# base =
+base = "dark"
 
 # Primary accent color for interactive elements.
-# primaryColor =
+primaryColor="#bd93f9"
 
 # Background color for the main content area.
-# backgroundColor =
+backgroundColor="#282a36"
 
 # Background color used for the sidebar and most interactive widgets.
-# secondaryBackgroundColor =
+secondaryBackgroundColor="#44475a"
 
 # Color used for almost all text.
-# textColor =
+textColor="#f8f8f2"
 
 # Font family for all text in the app, except code blocks. One of "sans serif",
 # "serif", or "monospace".
